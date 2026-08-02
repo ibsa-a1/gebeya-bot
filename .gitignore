@@ -6,3 +6,10 @@ dist/
 .next/
 *.log
 .DS_Store
+
+# Local AI tool configs — not part of the app
+.agents/
+.claude/
+.windsurf/
+AGENTS.md
+CLAUDE.md
