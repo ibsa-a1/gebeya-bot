@@ -89,7 +89,7 @@ async function main() {
       tenantId: tenant.id,
       customerTelegramId: "987654321",
       status: "PENDING",
-      totalAmount: products[4].price + products[7].price,
+      totalAmount: Number(products[4].price) + Number(products[7].price),
       items: {
         create: [
           { productId: products[4].id, quantity: 1, priceAtPurchase: products[4].price },
