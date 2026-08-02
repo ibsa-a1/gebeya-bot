@@ -1,13 +1,150 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum TenantRole {
+  OWNER
+  STAFF
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  DISPATCHED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  CHAPA
+  TELEBIRR_MOCK
+}
+
+enum PaymentStatus {
+  INITIATED
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id            String             @id @default(cuid())
+  email         String?            @unique
+  passwordHash  String?
+  telegramId    String?            @unique
+  name          String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  memberships   TenantMembership[]
+}
+
+model Tenant {
+  id                String             @id @default(cuid())
+  name              String
+  slug              String             @unique
+  botToken          String
+  botUsername       String             @unique
+  currency          String             @default("ETB")
+  discoverable      Boolean            @default(true)
+  chapaPublicKey    String?
+  chapaSecretKey    String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  memberships       TenantMembership[]
+  products          Product[]
+  orders            Order[]
+  voiceQueryLogs    VoiceQueryLog[]
+}
+
+model TenantMembership {
+  id        String     @id @default(cuid())
+  userId    String
+  tenantId  String
+  role      TenantRole @default(OWNER)
+  user      User       @relation(fields: [userId], references: [id])
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  createdAt DateTime   @default(now())
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+model Product {
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  name        String
+  description String?
+  category    String
+  price       Decimal      @db.Decimal(10, 2)
+  stock       Int          @default(0)
+  images      String[]
+  variants    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  orderItems  OrderItem[]
+
+  @@index([tenantId])
+  @@index([tenantId, category])
+}
+
+model Order {
+  id                 String       @id @default(cuid())
+  tenantId           String
+  tenant             Tenant       @relation(fields: [tenantId], references: [id])
+  customerTelegramId String
+  status             OrderStatus  @default(PENDING)
+  totalAmount        Decimal      @db.Decimal(10, 2)
+  qrCode             String?
+  items              OrderItem[]
+  payments           Payment[]
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([customerTelegramId])
+}
+
+model OrderItem {
+  id               String   @id @default(cuid())
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id])
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id])
+  quantity         Int
+  priceAtPurchase  Decimal  @db.Decimal(10, 2)
+  variant          Json?
+
+  @@index([orderId])
+}
+
+model Payment {
+  id            String          @id @default(cuid())
+  orderId       String
+  order         Order           @relation(fields: [orderId], references: [id])
+  provider      PaymentProvider
+  status        PaymentStatus   @default(INITIATED)
+  amount        Decimal         @db.Decimal(10, 2)
+  txRef         String          @unique
+  webhookPayload Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([orderId])
+}
+
+model VoiceQueryLog {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id])
+  customerTelegramId String
+  transcript         String
+  extractedIntent    Json
+  createdAt          DateTime @default(now())
+
+  @@index([tenantId])
 }

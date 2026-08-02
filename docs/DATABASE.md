@@ -1,5 +1,12 @@
 # Database Document — PostgreSQL & Prisma
 
+> **Prisma 7 note:** this project runs on Prisma 7.9.1, which changed several conventions from what earlier Prisma docs (and earlier drafts of this file) assume. Confirmed during actual setup:
+> - `datasource db { url = env("DATABASE_URL") }` is **no longer valid inside `schema.prisma`** — the connection URL now lives only in `prisma.config.ts` (`datasource: { url: process.env["DATABASE_URL"] }`). The schema's `datasource` block only declares the `provider`.
+> - **A driver adapter is mandatory at runtime** — Prisma 7 removed its Rust query engine. Install `pg` + `@prisma/adapter-pg` (+ `@types/pg`), and every `PrismaClient` instantiation (the NestJS `PrismaService`, and standalone scripts like the seed file) must construct a `PrismaPg` adapter and pass it via `new PrismaClient({ adapter })`.
+> - **`prisma migrate dev` no longer auto-runs `prisma generate`** — always run `npx prisma generate` explicitly after any migration, or imports from `@prisma/client` will fail with `Cannot find module '.prisma/client/default'`.
+> - The seed command is registered in `prisma.config.ts` (`migrations: { seed: "tsx prisma/seed.ts" }`), not in `package.json`'s `prisma` block — and running a `.ts` seed file directly requires `tsx` as a dev dependency.
+> - `.env` is **not auto-loaded by the Prisma CLI** anymore — `prisma.config.ts` and any standalone script (like `seed.ts`) must explicitly `import "dotenv/config"` at the top.
+
 ## 1. Entity-Relationship Overview
 
 ```
@@ -24,7 +31,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // NOTE: no `url` here in Prisma 7 — the connection string lives in prisma.config.ts instead.
 }
 
 enum TenantRole {
@@ -183,7 +190,9 @@ model VoiceQueryLog {
 **Migrations:**
 ```bash
 npx prisma migrate dev --name init        # local dev — creates + applies migration
+npx prisma generate                       # REQUIRED separate step in Prisma 7 — not run automatically
 npx prisma migrate deploy                 # production — applies existing migrations only
+npx prisma generate                       # also required after deploy, same reason
 ```
 
 **Seeding** (`server/prisma/seed.ts`, run via `npx prisma db seed`):
