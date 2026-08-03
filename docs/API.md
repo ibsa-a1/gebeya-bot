@@ -2,7 +2,7 @@
 
 ## 1. Global Server Config
 
-- **Base URL (dev):** `http://localhost:4000/api/v1`
+- **Base URL (dev):** `http://localhost:4010/api/v1` (port 4010, not the default 4000 — chosen locally to avoid a collision with another project's container already bound to 4000; adjust to whatever port is actually free in your environment)
 - **Base URL (prod):** `https://api.yourdomain.com/api/v1`
 - **Auth header:** `Authorization: Bearer <accessToken>`
 - **Content type:** `application/json` for all non-webhook, non-file endpoints
@@ -38,11 +38,15 @@
 
 ### Tenants (`/tenants`)
 
+> **Note:** tenant creation is platform-owner-only, enforced by `PlatformOwnerGuard` (checks a `isPlatformOwner` flag on the `User` model, added after the initial schema draft). The owner of the *tenant itself* (the merchant) is a separate, already-existing user — `ownerEmail` identifies them and must match a real registered account; the platform owner does not create merchant accounts as part of this call.
+
 | Method | Route | Access | Input | Output |
 |---|---|---|---|---|
-| POST | `/tenants` | Authenticated (platform owner only) | `{ name, botToken, botUsername, currency? }` | `201` → tenant record |
-| GET | `/tenants/:tenantId` | Tenant-scoped | — | `200` → tenant config (secrets masked) |
+| POST | `/tenants` | Authenticated + **Platform Owner only** | `{ name, slug, botToken, botUsername, ownerEmail, currency? }` | `201` → tenant record (secrets never included — see note below) |
+| GET | `/tenants/:tenantId` | Tenant-scoped | — | `200` → tenant config (`botToken`/`chapaSecretKey` never returned, not just masked) |
 | PATCH | `/tenants/:tenantId` | Tenant-scoped (`OWNER`) | `{ name?, discoverable?, chapaPublicKey?, chapaSecretKey? }` | `200` → updated tenant |
+
+**On secrets:** `botToken` and `chapaSecretKey` are encrypted (AES-256-GCM) before being written to the database, and the service layer uses an explicit allow-list when shaping any tenant response — these two fields are structurally absent from every API response, not merely stripped or masked.
 
 ### Products (`/tenants/:tenantId/products`)
 

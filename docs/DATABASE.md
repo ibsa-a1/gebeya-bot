@@ -64,6 +64,7 @@ model User {
   passwordHash  String?
   telegramId    String?            @unique
   name          String
+  isPlatformOwner Boolean          @default(false)
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   memberships   TenantMembership[]
@@ -184,6 +185,7 @@ model VoiceQueryLog {
 - **`variants` and `extractedIntent` as `Json`** rather than rigid columns — product attributes vary a lot (shoes have size/color, electronics don't), and this avoids constant migrations for attribute changes while still living in a relational, constrained schema overall.
 - **`discoverable` flag on `Tenant`** is the mechanism that lets a merchant opt out of the cross-tenant Discovery Bot without needing a separate table.
 - **No `User` record for buyers** is intentional — keeps the auth system scoped to people who actually need dashboard access, and avoids creating throwaway accounts for anonymous Telegram shoppers.
+- **`isPlatformOwner` on `User`** was added during actual implementation (not in the original draft) to enforce that only the platform owner can create new tenants — checked fresh from the database on every request via a dedicated guard, not baked into the JWT, so revoking the flag takes effect immediately rather than only after token expiry. There is deliberately no API endpoint to set this flag; it's set directly against the database by whoever operates the platform.
 
 ## 4. Seeding & Migration Pipeline
 
