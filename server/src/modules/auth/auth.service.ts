@@ -10,6 +10,10 @@ import { SignupDto } from "./dto/signup.dto";
 import { LoginDto } from "./dto/login.dto";
 import { TelegramAuthDto } from "./dto/telegram-auth.dto";
 import { TelegramAuthVerifier } from "./strategies/telegram.strategy";
+import { getEnv } from "../../config/env.util";
+
+const FIFTEEN_MINUTES_IN_SECONDS = 15 * 60;
+const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 
 @Injectable()
 export class AuthService {
@@ -23,13 +27,13 @@ export class AuthService {
     const payload = { sub: userId, email };
 
     const accessToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_ACCESS_SECRET,
-      expiresIn: process.env.JWT_ACCESS_EXPIRY || "15m",
+      secret: getEnv("JWT_ACCESS_SECRET"),
+      expiresIn: FIFTEEN_MINUTES_IN_SECONDS,
     });
 
     const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: process.env.JWT_REFRESH_EXPIRY || "7d",
+      secret: getEnv("JWT_REFRESH_SECRET"),
+      expiresIn: SEVEN_DAYS_IN_SECONDS,
     });
 
     return { accessToken, refreshToken };
@@ -66,11 +70,7 @@ export class AuthService {
   }
 
   async telegramLogin(dto: TelegramAuthDto) {
-    const botToken = process.env.PLATFORM_AUTH_BOT_TOKEN;
-    if (!botToken) {
-      throw new UnauthorizedException("Telegram login is not configured");
-    }
-
+    const botToken = getEnv("PLATFORM_AUTH_BOT_TOKEN");
     this.telegramVerifier.verify(dto, botToken);
 
     const telegramId = String(dto.id);
@@ -92,13 +92,13 @@ export class AuthService {
   async refresh(refreshToken: string) {
     try {
       const payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET,
+        secret: getEnv("JWT_REFRESH_SECRET"),
       });
       const accessToken = await this.jwtService.signAsync(
         { sub: payload.sub, email: payload.email },
         {
-          secret: process.env.JWT_ACCESS_SECRET,
-          expiresIn: process.env.JWT_ACCESS_EXPIRY || "15m",
+          secret: getEnv("JWT_ACCESS_SECRET"),
+          expiresIn: FIFTEEN_MINUTES_IN_SECONDS,
         },
       );
       return { accessToken };
