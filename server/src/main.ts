@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { NestFactory } from "@nestjs/core";
+import * as cookieParser from "cookie-parser";
 import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
@@ -7,6 +8,7 @@ import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser());
 
   app.enableCors({
     origin: process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : "http://localhost:3000",
