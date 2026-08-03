@@ -7,6 +7,7 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
 import { TelegramAuthVerifier } from "./strategies/telegram.strategy";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { TenantGuard } from "./guards/tenant.guard";
+import { PlatformOwnerGuard } from "./guards/platform-owner.guard";
 import { CryptoService } from "./crypto/crypto.service";
 
 @Module({
@@ -18,8 +19,9 @@ import { CryptoService } from "./crypto/crypto.service";
     TelegramAuthVerifier,
     JwtAuthGuard,
     TenantGuard,
+    PlatformOwnerGuard,
     CryptoService,
   ],
-  exports: [JwtAuthGuard, TenantGuard, CryptoService],
+  exports: [JwtAuthGuard, TenantGuard, PlatformOwnerGuard, CryptoService],
 })
 export class AuthModule {}
