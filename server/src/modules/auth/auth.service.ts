@@ -12,7 +12,7 @@ import { TelegramAuthDto } from "./dto/telegram-auth.dto";
 import { TelegramAuthVerifier } from "./strategies/telegram.strategy";
 import { getEnv } from "../../config/env.util";
 
-const FIFTEEN_MINUTES_IN_SECONDS = 15 * 60;
+const FIFTEEN_MINUTES_IN_SECONDS = 60 * 60; // bumped to 1h for local dev convenience — revert before real production use
 const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { Injectable, BadGatewayException } from "@nestjs/common";
-import Groq from "groq-sdk";
+import Groq, { toFile } from "groq-sdk";
 import { getEnv } from "../../config/env.util";
 
 @Injectable()
@@ -16,11 +16,13 @@ export class SttService {
       throw new BadGatewayException(`Could not fetch audio file from ${fileUrl}`);
     }
 
-    // groq-sdk accepts a raw fetch Response directly as the `file` param —
-    // no manual buffering needed.
+    const arrayBuffer = await audioResponse.arrayBuffer();
+
     const transcription = await this.groq.audio.transcriptions.create({
-      model: "whisper-large-v3-turbo",
-      file: audioResponse,
+      model: "whisper-large-v3",
+      file: await toFile(Buffer.from(arrayBuffer), "voice-note.ogg"),
+      language: "am", // explicit Amharic — auto-detection just failed badly
+      temperature: 0,
     });
 
     return transcription.text;
