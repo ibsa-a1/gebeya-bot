@@ -22,6 +22,14 @@ class EnvironmentVariables {
   @IsNotEmpty()
   ENCRYPTION_KEY: string;
 
+  @IsString()
+  @IsNotEmpty()
+  GROQ_API_KEY: string;
+
+  @IsString()
+  @IsNotEmpty()
+  GEMINI_API_KEY: string;
+
   @IsNumberString()
   PORT: string;
 }
