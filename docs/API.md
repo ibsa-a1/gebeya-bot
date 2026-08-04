@@ -60,8 +60,13 @@
 
 ### Orders (`/tenants/:tenantId/orders`)
 
+> **Note on order creation — two distinct paths, not one:** real buyers (Telegram customers) have no dashboard login and no `TenantMembership`, so they can never call a `TenantGuard`-protected route. The tenant-scoped `POST` below exists for staff/manual testing only (e.g. verifying stock behavior during development). The actual buyer-facing checkout — the one that matters in production — is a **public** endpoint under `/mini-app/tenants/:tenantId/checkout` (see the Telegram & Mini App section), which calls the same underlying `OrdersService.create()` logic but requires no dashboard authentication at all, since the buyer only ever has a Telegram identity.
+>
+> **Stock handling:** `OrdersService.create()` decrements stock via a single conditional `UPDATE ... WHERE stock >= quantity` per item, inside one transaction spanning the whole order. This closes the race window between "check stock" and "decrement stock" — two simultaneous checkouts for the last unit can't both succeed, and a mid-order failure (e.g. item 3 of 4 is out of stock) rolls back every stock decrement already applied earlier in that same order, not just the failing item.
+
 | Method | Route | Access | Input | Output |
 |---|---|---|---|---|
+| POST | `/tenants/:tenantId/orders` | Tenant-scoped (**staff/testing only** — not the real buyer path, see note above) | `{ customerTelegramId, items: [{ productId, quantity, variant? }] }` | `201` → order + items, or `409` if any item's stock is insufficient at write time |
 | GET | `/tenants/:tenantId/orders` | Tenant-scoped | Query: `status?`, `page?` | `200` → `{ items: Order[], total }` |
 | GET | `/tenants/:tenantId/orders/:orderId` | Tenant-scoped | — | `200` → order + items + payment |
 | PATCH | `/tenants/:tenantId/orders/:orderId/status` | Tenant-scoped | `{ status }` | `200` → updated order |

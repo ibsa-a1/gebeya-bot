@@ -5,6 +5,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
 import { TenantsModule } from "./modules/tenants/tenants.module";
 import { ProductsModule } from "./modules/products/products.module";
+import { OrdersModule } from "./modules/orders/orders.module";
 import { validateEnv } from "./config/env.validation";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -20,6 +21,7 @@ import { AppService } from "./app.service";
     UsersModule,
     TenantsModule,
     ProductsModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
