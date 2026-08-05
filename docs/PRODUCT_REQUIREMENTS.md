@@ -53,7 +53,7 @@ This product turns any merchant's existing Telegram channel into a structured, A
 1. Buyer sends an Amharic or Afaan Oromo voice note to a merchant's Telegram bot.
 2. Backend downloads the `.ogg` voice file via the Telegram Bot API.
 3. Groq Whisper transcribes the voice note to text.
-4. Gemini 1.5 Flash extracts structured intent (category, size, color, price ceiling) as JSON.
+4. Gemini 3.6 Flash extracts structured intent (category, size, color, price ceiling) as JSON.
 5. Backend queries that tenant's product catalog in PostgreSQL for matches.
 6. Bot replies with product cards and an "Open Store" button that launches the Telegram Mini App.
 7. Buyer browses/filters in the Mini App, adds to cart, taps **Buy Now**.

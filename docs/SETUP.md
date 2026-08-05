@@ -30,7 +30,7 @@ PLATFORM_DISCOVERY_BOT_TOKEN="123456:ABC-your-discovery-bot-token"
 
 # AI services (free tier)
 GROQ_API_KEY="gsk_..."
-GEMINI_API_KEY="AI..."
+GEMINI_API_KEY="AQ...."  # Google's newer "auth key" format (prefix AQ.), replacing the older AIza... format for keys issued from mid-2026 onward
 
 # Payments (sandbox)
 CHAPA_SECRET_KEY_DEFAULT="CHASECK_TEST-..."

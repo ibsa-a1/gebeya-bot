@@ -101,7 +101,7 @@ server/
 │   │   └── ai/
 │   │       ├── ai.module.ts
 │   │       ├── stt.service.ts              <- Groq Whisper integration
-│   │       ├── intent.service.ts           <- Gemini 1.5 Flash integration
+│   │       ├── intent.service.ts           <- Gemini 3.6 Flash integration
 │   │       └── dto/
 │   ├── common/
 │   │   ├── filters/                        <- global exception filter

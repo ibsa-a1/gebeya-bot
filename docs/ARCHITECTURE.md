@@ -89,7 +89,9 @@ Validation errors (via `class-validator` DTOs) are automatically caught by NestJ
 | Service | Purpose | Called from |
 |---|---|---|
 | Groq (Whisper large-v3-turbo) | Voice note transcription | AI Module |
-| Google Gemini 1.5 Flash | Intent/entity extraction from transcribed or typed text | AI Module |
+| Google Gemini 3.6 Flash | Intent/entity extraction from transcribed or typed text (model updated from the originally-planned 1.5 Flash, which was deprecated for new projects by the time this was actually built) | AI Module |
+
+> **Real-world AI pipeline findings (from actual testing, not assumptions):** Groq Whisper (`whisper-large-v3`) on short, headset-degraded, auto-language-detected Telegram voice notes produced genuinely bad output — hallucinated filler phrases, wrong-script transliteration, repetition loops. Longer (8+ second), clearly-spoken, explicitly `language: "am"`-tagged recordings produced recognizable (though imperfect, often Latin-transliterated rather than clean Ge'ez script) transcripts. Critically, Gemini's intent extraction proved robust enough to correctly recover structured intent (category/size/color) even from messy, garbled transcripts — this tolerance is what makes the pipeline viable despite imperfect STT. **Practical implication:** don't rely on the raw transcript ever being clean; treat Gemini's extraction as the real accuracy layer, and encourage buyers (via bot UX copy) to speak clearly for several seconds rather than short one-word notes.
 | Chapa API (sandbox) | Payment checkout link generation, webhook verification | Payments Module |
 | Mocked Telebirr endpoint | Simulated payment flow (internal only, clearly labeled as mock) | Payments Module |
 | Telegram Bot API | All bot messaging, webhook receipt, Mini App integration | Telegram Module |

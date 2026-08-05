@@ -212,7 +212,7 @@ server/src/modules/ai/
 │   ├── transcribe.dto.ts         ← 1st
 │   └── extract-intent.dto.ts     ← 1st
 ├── stt.service.ts                 ← 2nd (Groq Whisper call, takes a Telegram file URL, returns transcript)
-├── intent.service.ts              ← 3rd (Gemini 1.5 Flash call w/ Ethiopian-commerce-tuned system prompt, returns structured JSON)
+├── intent.service.ts              ← 3rd (Gemini 3.6 Flash call w/ Ethiopian-commerce-tuned system prompt, returns structured JSON)
 └── ai.module.ts                    ← 4th
 ```
 
