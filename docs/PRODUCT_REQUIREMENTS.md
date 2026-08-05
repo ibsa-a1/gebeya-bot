@@ -35,8 +35,8 @@ This product turns any merchant's existing Telegram channel into a structured, A
 
 | Feature | MVP (v1) | Future Scale |
 |---|---|---|
-| Amharic/Afaan Oromo voice-to-intent search | ✅ Voice note → transcription → structured product query | Multi-turn conversational refinement ("show me cheaper ones") |
-| Typed text search (Amharic script, Latin-script Amharic, English) | ✅ Fallback and primary alternative to voice | Full NLP autocomplete-as-you-type |
+| Amharic/Afaan Oromo voice-to-intent search | ⚠️ Working, but real live testing (Phase 10) showed inconsistent transcription accuracy specifically for voice notes recorded and sent through Telegram's own in-app voice recorder — repeated attempts on a real deployed bot returned garbled/unintelligible transcripts more often than not, even for clear speech. A controlled test using a natively-recorded phone voice memo (bypassing Telegram's recording pipeline) transcribed correctly. Root cause not fully isolated — likely Telegram's voice encoding/compression or mic-routing interaction, not a flaw in Whisper generally. **Practical implication: typed text should be treated as the primary, reliable path for launch, not voice.** | Multi-turn conversational refinement ("show me cheaper ones"); investigating Telegram voice encoding accuracy further |
+| Typed text search (Amharic script, Latin-script Amharic, English) | ✅ Fully working and reliable in live testing — correctly extracts category/color/size/price even from colloquial, mixed-language, and native Amharic-script input | Full NLP autocomplete-as-you-type |
 | Telegram Mini App storefront | ✅ Grid view, filters, cart, product detail | Wishlist, saved carts, personalized recommendations |
 | In-chat checkout & payment | ✅ Chapa sandbox + mocked Telebirr flow | Real Telebirr merchant integration, installment/BNPL |
 | QR digital receipts | ✅ Generated on payment success, scanned at delivery | Rider app for scan confirmation, GPS delivery tracking |
@@ -90,6 +90,7 @@ This product turns any merchant's existing Telegram channel into a structured, A
 The system must **not**:
 - Allow any API request to read or modify another tenant's products, orders, or configuration — tenant isolation is enforced at the data-access layer, not just the UI.
 - Treat a failed or low-confidence voice transcription as a valid search — below a confidence/parse threshold, the bot must fall back to asking the buyer to type their request or pick from categories.
+- Silently return an unfiltered full catalog when no usable intent was extracted (a real bug caught in live testing) — the bot must say it didn't understand rather than implying it found a match. Similarly, when a result only partially matches what was asked (e.g. right category, wrong color/size), the bot must say so honestly rather than presenting a partial match as exact.
 - Process a payment webhook more than once for the same transaction (idempotency required — duplicate webhook deliveries are a real occurrence with payment providers).
 - Allow checkout to succeed against stock that has since sold out — stock must be re-validated at payment confirmation, not just at cart-add time.
 - Represent the mocked Telebirr flow as a real Telebirr integration anywhere in the product-facing UI or documentation — it must be clearly a simulated flow until a genuine Telebirr merchant integration exists.
