@@ -6,6 +6,14 @@ export class UpdateTenantDto {
   name?: string;
 
   @IsOptional()
+  @IsString()
+  botToken?: string;
+
+  @IsOptional()
+  @IsString()
+  botUsername?: string;
+
+  @IsOptional()
   @IsBoolean()
   discoverable?: boolean;
 

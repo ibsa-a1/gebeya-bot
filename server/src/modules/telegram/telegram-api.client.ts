@@ -24,26 +24,28 @@ export class TelegramApiClient {
         ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
       }),
     });
+    const data = await res.json(); // read the body exactly once, regardless of status
     if (!res.ok) {
-      this.logger.error(`sendMessage failed: ${await res.text()}`);
+      this.logger.error(`sendMessage failed: ${JSON.stringify(data)}`);
     }
-    return res.json();
+    return data;
   }
 
   async sendPhoto(botToken: string, chatId: number | string, photo: Buffer, caption?: string) {
     const form = new FormData();
     form.append("chat_id", String(chatId));
     if (caption) form.append("caption", caption);
-    form.append("photo", new Blob([photo]), "receipt.png");
+    form.append("photo", new Blob([new Uint8Array(photo)]), "receipt.png");
 
     const res = await fetch(`${this.baseUrl(botToken)}/sendPhoto`, {
       method: "POST",
       body: form,
     });
+    const data = await res.json();
     if (!res.ok) {
-      this.logger.error(`sendPhoto failed: ${await res.text()}`);
+      this.logger.error(`sendPhoto failed: ${JSON.stringify(data)}`);
     }
-    return res.json();
+    return data;
   }
 
   async getFile(botToken: string, fileId: string): Promise<string> {

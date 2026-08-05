@@ -37,10 +37,21 @@ export class TelegramBotService {
     }
 
     if (message.text === "/shop") {
-      const miniAppUrl = `${getEnv("CLIENT_URL")}/mini-app/${tenant.id}`;
-      return this.api.sendMessage(tenant.botToken, chatId, "🛍️ Tap below to open the store:", {
-        inline_keyboard: [[{ text: "Open Store", web_app: { url: miniAppUrl } }]],
-      });
+      const clientUrl = getEnv("CLIENT_URL");
+      if (clientUrl.startsWith("https://")) {
+        const miniAppUrl = `${clientUrl}/mini-app/${tenant.id}`;
+        return this.api.sendMessage(tenant.botToken, chatId, "🛍️ Tap below to open the store:", {
+          inline_keyboard: [[{ text: "Open Store", web_app: { url: miniAppUrl } }]],
+        });
+      }
+      // Telegram requires HTTPS for web_app buttons — the Mini App frontend
+      // doesn't have a real deployed HTTPS URL yet (that's Phase 12), so we
+      // degrade gracefully here instead of crashing.
+      return this.api.sendMessage(
+        tenant.botToken,
+        chatId,
+        "🛍️ Our in-chat store is coming very soon! For now, just tell me what you're looking for.",
+      );
     }
 
     if (message.text === "/help") {
@@ -115,13 +126,20 @@ export class TelegramBotService {
     const lines = products.map(
       (p) => `• <b>${p.name}</b> — ${p.price} ${tenant.currency} (stock: ${p.stock})`,
     );
-    const miniAppUrl = `${getEnv("CLIENT_URL")}/mini-app/${tenant.id}`;
+    const clientUrl = getEnv("CLIENT_URL");
+    const replyMarkup = clientUrl.startsWith("https://")
+      ? {
+          inline_keyboard: [
+            [{ text: "Open Store to Buy", web_app: { url: `${clientUrl}/mini-app/${tenant.id}` } }],
+          ],
+        }
+      : undefined;
 
     return this.api.sendMessage(
       tenant.botToken,
       chatId,
       `Here's what I found:\n\n${lines.join("\n")}`,
-      { inline_keyboard: [[{ text: "Open Store to Buy", web_app: { url: miniAppUrl } }]] },
+      replyMarkup,
     );
   }
 }

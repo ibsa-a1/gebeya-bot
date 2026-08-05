@@ -63,6 +63,10 @@ export class TenantsService {
 
     const data: Record<string, unknown> = {};
     if (dto.name !== undefined) data.name = dto.name;
+    if (dto.botUsername !== undefined) data.botUsername = dto.botUsername;
+    if (dto.botToken !== undefined) {
+      data.botToken = this.crypto.encrypt(dto.botToken);
+    }
     if (dto.discoverable !== undefined) data.discoverable = dto.discoverable;
     if (dto.chapaPublicKey !== undefined) data.chapaPublicKey = dto.chapaPublicKey;
     if (dto.chapaSecretKey !== undefined) {
