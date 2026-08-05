@@ -5,6 +5,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { CryptoService } from "../auth/crypto/crypto.service";
 import { ChapaProvider } from "./providers/chapa.provider";
 import { MockTelebirrProvider } from "./providers/mock-telebirr.provider";
+import { QrReceiptService } from "../telegram/qr-receipt.service";
 
 describe("PaymentsService", () => {
   let service: PaymentsService;
@@ -17,6 +18,7 @@ describe("PaymentsService", () => {
   let crypto: { encrypt: jest.Mock; decrypt: jest.Mock };
   let chapa: { initialize: jest.Mock };
   let mockTelebirr: { initialize: jest.Mock };
+  let qrReceipt: { sendReceiptForOrder: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
@@ -31,6 +33,7 @@ describe("PaymentsService", () => {
     };
     chapa = { initialize: jest.fn() };
     mockTelebirr = { initialize: jest.fn() };
+    qrReceipt = { sendReceiptForOrder: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -39,6 +42,7 @@ describe("PaymentsService", () => {
         { provide: CryptoService, useValue: crypto },
         { provide: ChapaProvider, useValue: chapa },
         { provide: MockTelebirrProvider, useValue: mockTelebirr },
+        { provide: QrReceiptService, useValue: qrReceipt },
       ],
     }).compile();
 
@@ -100,7 +104,7 @@ describe("PaymentsService", () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it("processes a payment exactly once on first delivery", async () => {
+    it("processes a payment exactly once on first delivery AND triggers the QR receipt", async () => {
       prisma.payment.findUnique.mockResolvedValue({
         txRef: "ref-1",
         status: "INITIATED",
@@ -111,6 +115,20 @@ describe("PaymentsService", () => {
 
       expect(result).toEqual({ alreadyProcessed: false, status: "SUCCESS" });
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(qrReceipt.sendReceiptForOrder).toHaveBeenCalledWith("order-1");
+    });
+
+    it("does NOT trigger a QR receipt when the payment fails", async () => {
+      prisma.payment.findUnique.mockResolvedValue({
+        txRef: "ref-2",
+        status: "INITIATED",
+        orderId: "order-1",
+      });
+      prisma.payment.update.mockResolvedValue({});
+
+      await service.handleChapaWebhook({ tx_ref: "ref-2", status: "failed" });
+
+      expect(qrReceipt.sendReceiptForOrder).not.toHaveBeenCalled();
     });
 
     it("does NOT reprocess a payment that has already been finalized — the actual idempotency test", async () => {

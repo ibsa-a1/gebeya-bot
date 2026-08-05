@@ -104,13 +104,38 @@ export class TelegramBotService {
       );
     }
 
-    const where: Record<string, unknown> = { tenantId: tenant.id };
-    if (extracted.category) {
-      where.category = { contains: extracted.category, mode: "insensitive" };
+    this.logger.log(`Extracted intent: ${JSON.stringify(extracted)}`);
+
+    // Our current product model doesn't have structured size/color fields —
+    // that data mostly lives embedded in product names (e.g. "Black Running
+    // Shoes - Size 42") or the optional `variants` JSON, which our seed data
+    // doesn't populate. Given that, the most honest available approach right
+    // now is: match ANY extracted attribute (category, color, size) against
+    // the product name — not perfect structured filtering, but meaningfully
+    // better than ignoring color/size entirely.
+    const searchTerms = [extracted.category, extracted.color, extracted.size].filter(
+      (t): t is string => Boolean(t),
+    );
+
+    if (searchTerms.length === 0) {
+      // Gemini genuinely couldn't extract anything usable — say so honestly
+      // rather than silently returning the entire catalog, which would
+      // misleadingly imply we understood the request.
+      return this.api.sendMessage(
+        tenant.botToken,
+        chatId,
+        "I didn't quite catch what you're looking for — could you try describing it again, or use /shop to browse everything?",
+      );
     }
 
     const products = await this.prisma.product.findMany({
-      where,
+      where: {
+        tenantId: tenant.id,
+        OR: searchTerms.flatMap((term) => [
+          { category: { contains: term, mode: "insensitive" as const } },
+          { name: { contains: term, mode: "insensitive" as const } },
+        ]),
+      },
       take: 5,
       orderBy: { createdAt: "desc" },
     });
@@ -122,6 +147,19 @@ export class TelegramBotService {
         `I couldn't find anything matching "${extracted.intent}". Try /shop to browse everything we have.`,
       );
     }
+
+    // Since we match on ANY extracted term (category/color/size), a result
+    // might only partially match what was asked for (e.g. right category,
+    // wrong color) — be honest about that instead of implying an exact match.
+    const exactColorSize =
+      (!extracted.color ||
+        products.some((p) => p.name.toLowerCase().includes(extracted.color!.toLowerCase()))) &&
+      (!extracted.size ||
+        products.some((p) => p.name.toLowerCase().includes(extracted.size!.toLowerCase())));
+
+    const introText = exactColorSize
+      ? "Here's what I found:"
+      : "I couldn't find an exact match, but here's the closest thing we have:";
 
     const lines = products.map(
       (p) => `• <b>${p.name}</b> — ${p.price} ${tenant.currency} (stock: ${p.stock})`,
@@ -138,7 +176,7 @@ export class TelegramBotService {
     return this.api.sendMessage(
       tenant.botToken,
       chatId,
-      `Here's what I found:\n\n${lines.join("\n")}`,
+      `${introText}\n\n${lines.join("\n")}`,
       replyMarkup,
     );
   }
