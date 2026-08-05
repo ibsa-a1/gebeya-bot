@@ -4,6 +4,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { CryptoService } from "../auth/crypto/crypto.service";
 import { ChapaProvider } from "./providers/chapa.provider";
 import { MockTelebirrProvider } from "./providers/mock-telebirr.provider";
+import { QrReceiptService } from "../telegram/qr-receipt.service";
 import { InitializePaymentDto } from "./dto/initialize-payment.dto";
 import { ChapaWebhookDto } from "./dto/chapa-webhook.dto";
 
@@ -14,6 +15,7 @@ export class PaymentsService {
     private readonly crypto: CryptoService,
     private readonly chapa: ChapaProvider,
     private readonly mockTelebirr: MockTelebirrProvider,
+    private readonly qrReceipt: QrReceiptService,
   ) {}
 
   private async getOrderForPayment(tenantId: string, orderId: string) {
@@ -128,6 +130,10 @@ export class PaymentsService {
           ]
         : []),
     ]);
+
+    if (succeeded) {
+      await this.qrReceipt.sendReceiptForOrder(payment.orderId);
+    }
 
     return { alreadyProcessed: false, status: newStatus };
   }

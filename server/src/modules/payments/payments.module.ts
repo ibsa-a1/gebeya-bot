@@ -6,7 +6,7 @@ import { MockTelebirrProvider } from "./providers/mock-telebirr.provider";
 import { AuthModule } from "../auth/auth.module";
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, TelegramModule],
   controllers: [PaymentsController],
   providers: [PaymentsService, ChapaProvider, MockTelebirrProvider],
 })

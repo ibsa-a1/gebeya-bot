@@ -20,6 +20,14 @@ class EnvironmentVariables {
 
   @IsString()
   @IsNotEmpty()
+  PLATFORM_DISCOVERY_BOT_TOKEN: string;
+
+  @IsString()
+  @IsNotEmpty()
+  CLIENT_URL: string;
+
+  @IsString()
+  @IsNotEmpty()
   ENCRYPTION_KEY: string;
 
   @IsString()

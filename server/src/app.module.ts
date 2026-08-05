@@ -8,6 +8,7 @@ import { ProductsModule } from "./modules/products/products.module";
 import { OrdersModule } from "./modules/orders/orders.module";
 import { PaymentsModule } from "./modules/payments/payments.module";
 import { AiModule } from "./modules/ai/ai.module";
+import { TelegramModule } from "./modules/telegram/telegram.module";
 import { validateEnv } from "./config/env.validation";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -26,6 +27,7 @@ import { AppService } from "./app.service";
     OrdersModule,
     PaymentsModule,
     AiModule,
+    TelegramModule,
   ],
   controllers: [AppController],
   providers: [AppService],
