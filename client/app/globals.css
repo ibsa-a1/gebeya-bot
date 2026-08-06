@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-ink: #1c1e26;
+  --color-indigo: #24365c;
+  --color-indigo-light: #2f4573;
+  --color-gold: #e3a23c;
+  --color-gold-dark: #c98a2c;
+  --color-canvas: #f6f3ec;
+  --color-card: #ffffff;
+  --color-border: #e4dfd3;
+  --color-market-green: #35664b;
+  --color-signal-red: #b23a2e;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-ink: var(--color-ink);
+  --color-indigo: var(--color-indigo);
+  --color-indigo-light: var(--color-indigo-light);
+  --color-gold: var(--color-gold);
+  --color-gold-dark: var(--color-gold-dark);
+  --color-canvas: var(--color-canvas);
+  --color-card: var(--color-card);
+  --color-border: var(--color-border);
+  --color-market-green: var(--color-market-green);
+  --color-signal-red: var(--color-signal-red);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* The signature motif: a thin repeating diamond rule, evoking Ethiopian
+   tilet textile borders. Used sparingly — sidebar brand mark, empty states. */
+.tilet-rule {
+  height: 3px;
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-gold) 0px,
+    var(--color-gold) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
