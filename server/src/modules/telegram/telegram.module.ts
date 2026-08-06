@@ -5,6 +5,7 @@ import { TelegramBotService } from "./telegram-bot.service";
 import { DiscoveryService } from "./discovery.service";
 import { QrReceiptService } from "./qr-receipt.service";
 import { TelegramApiClient } from "./telegram-api.client";
+import { InitDataVerifier } from "./init-data-verifier.service";
 import { AuthModule } from "../auth/auth.module";
 import { AiModule } from "../ai/ai.module";
 import { ProductsModule } from "../products/products.module";
@@ -13,7 +14,7 @@ import { OrdersModule } from "../orders/orders.module";
 @Module({
   imports: [AuthModule, AiModule, ProductsModule, OrdersModule],
   controllers: [TelegramController, MiniAppController],
-  providers: [TelegramBotService, DiscoveryService, QrReceiptService, TelegramApiClient],
+  providers: [TelegramBotService, DiscoveryService, QrReceiptService, TelegramApiClient, InitDataVerifier],
   exports: [QrReceiptService],
 })
 export class TelegramModule {}

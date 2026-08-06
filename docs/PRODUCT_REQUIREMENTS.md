@@ -87,6 +87,8 @@ This product turns any merchant's existing Telegram channel into a structured, A
 
 ## 5. Explicit Edge Cases & Boundaries
 
+> **Real gap found and fixed during live testing (Phase 12):** the Mini App checkout endpoint originally trusted a client-submitted `customerTelegramId` string with no verification — a test using `"abcdefgh"` as the ID placed a real order successfully. Fixed by requiring Telegram's cryptographically signed `initData` payload (same HMAC pattern as the Login Widget verification in Phase 3, but with Telegram's Mini-App-specific key derivation: `secret_key = HMAC-SHA256(key="WebAppData", data=botToken)`), verified server-side before trusting any customer identity. A `devTestTelegramId` field remains as a clearly-labeled, `NODE_ENV`-gated fallback for testing outside real Telegram sessions — it is explicitly disabled when `NODE_ENV === "production"` and logs a warning whenever used. **Before any real launch, confirm this fallback path is genuinely unreachable in the production environment**, not just disabled by convention.
+
 The system must **not**:
 - Allow any API request to read or modify another tenant's products, orders, or configuration — tenant isolation is enforced at the data-access layer, not just the UI.
 - Treat a failed or low-confidence voice transcription as a valid search — below a confidence/parse threshold, the bot must fall back to asking the buyer to type their request or pick from categories.
