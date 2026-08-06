@@ -77,7 +77,7 @@ export class OrdersService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.order.findMany({
         where,
-        include: { items: true },
+        include: { items: { include: { product: true } } },
         skip: (page - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
         orderBy: { createdAt: "desc" },
