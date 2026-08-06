@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../../hooks/useAuth";
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
+import { PasswordInput } from "../../../components/ui/PasswordInput";
 import { Card } from "../../../components/ui/Card";
 import { TelegramLoginButton } from "../../../components/auth/TelegramLoginButton";
+import { isValidEmail } from "../../../lib/validation";
 
 export default function SignupPage() {
   const { signup } = useAuth();
@@ -15,19 +17,59 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const nameError = submitted && !name.trim() ? "Enter your name" : null;
+  const emailError = submitted
+    ? !email
+      ? "Enter your email"
+      : !isValidEmail(email)
+        ? "Enter a valid email address"
+        : null
+    : null;
+  const passwordError = submitted
+    ? !password
+      ? "Enter a password"
+      : password.length < 8
+        ? "Password must be at least 8 characters"
+        : null
+    : null;
+  const confirmError = submitted
+    ? !confirmPassword
+      ? "Confirm your password"
+      : confirmPassword !== password
+        ? "Passwords don't match"
+        : null
+    : null;
+
+  const hasErrors = !!(nameError || emailError || passwordError || confirmError);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError(null);
+    setSubmitted(true);
+    setServerError(null);
+
+    if (
+      !name.trim() ||
+      !email ||
+      !isValidEmail(email) ||
+      !password ||
+      password.length < 8 ||
+      confirmPassword !== password
+    ) {
+      return;
+    }
+
     setLoading(true);
     try {
       await signup(email, password, name);
       router.push("/products");
     } catch (err: any) {
       const message = err?.response?.data?.message;
-      setError(typeof message === "string" ? message : "Something went wrong. Try again.");
+      setServerError(typeof message === "string" ? message : "Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }
@@ -38,35 +80,41 @@ export default function SignupPage() {
       <h1 className="text-xl font-semibold text-ink">Create your account</h1>
       <p className="mt-1 text-sm text-ink/60">Set up your storefront in minutes</p>
 
-      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+      <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-4">
         <Input
           label="Full name"
           name="name"
           autoComplete="name"
-          required
           value={name}
           onChange={(e) => setName(e.target.value)}
+          error={nameError ?? undefined}
         />
         <Input
           label="Email"
           type="email"
           name="email"
           autoComplete="email"
-          required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          error={emailError ?? undefined}
         />
-        <Input
+        <PasswordInput
           label="Password"
-          type="password"
           name="password"
           autoComplete="new-password"
-          minLength={8}
-          required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          error={passwordError ?? undefined}
         />
-        {error && <p className="text-sm text-signal-red">{error}</p>}
+        <PasswordInput
+          label="Confirm password"
+          name="confirmPassword"
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          error={confirmError ?? undefined}
+        />
+        {serverError && <p className="text-sm text-signal-red">{serverError}</p>}
         <Button type="submit" loading={loading} className="mt-2 w-full">
           Create account
         </Button>
