@@ -42,13 +42,30 @@ export class DiscoveryService {
         return;
       }
 
-      const where: Record<string, unknown> = { tenant: { discoverable: true } };
-      if (extracted.category) {
-        where.category = { contains: extracted.category, mode: "insensitive" };
+      // Mirrors the proven tenant-search pattern in telegram-bot.service.ts:
+      // match ANY extracted attribute against BOTH category and name, since
+      // our product model doesn't have structured size/color fields yet.
+      const searchTerms = [extracted.category, extracted.color, extracted.size].filter(
+        (t): t is string => Boolean(t),
+      );
+
+      if (searchTerms.length === 0) {
+        await this.api.sendMessage(
+          botToken,
+          chatId,
+          "I didn't quite catch what you're looking for — try describing it again?",
+        );
+        return;
       }
 
       const products = await this.prisma.product.findMany({
-        where,
+        where: {
+          tenant: { discoverable: true },
+          OR: searchTerms.flatMap((term) => [
+            { category: { contains: term, mode: "insensitive" as const } },
+            { name: { contains: term, mode: "insensitive" as const } },
+          ]),
+        },
         take: 5,
         include: { tenant: { select: { name: true, botUsername: true, currency: true } } },
         orderBy: { createdAt: "desc" },
