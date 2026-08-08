@@ -21,6 +21,21 @@ export class PaymentsController {
     return this.paymentsService.initializeMockTelebirr(tenantId, dto);
   }
 
+  // TEMPORARY manual fallback (Phase 13, Aug 2026): Chapa's sandbox has been
+  // observed to complete real payments without ever delivering the
+  // corresponding webhook (confirmed via Chapa's own dashboard showing
+  // successful transactions with no webhook fired). This endpoint lets a
+  // dashboard user manually trigger a status check for a given transaction
+  // instead of waiting indefinitely for a webhook that may never arrive.
+  // A proper automated version (bot-triggered /status check, or a scheduled
+  // polling job) is planned as a real Phase 14/15 feature — this is
+  // deliberately minimal, staff-triggered, and not buyer-facing yet.
+  @Post("chapa/verify/:tenantId/:txRef")
+  @UseGuards(JwtAuthGuard, TenantGuard)
+  verifyChapaPayment(@Param("tenantId") tenantId: string, @Param("txRef") txRef: string) {
+    return this.paymentsService.verifyChapaPayment(tenantId, txRef);
+  }
+
   // Webhooks are NOT behind JwtAuthGuard/TenantGuard — Chapa itself calls
   // this, it has no user session. Real signature verification (Chapa signs
   // its webhooks) is a hardening item worth adding before real production
