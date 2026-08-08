@@ -7,6 +7,7 @@ import { MockTelebirrProvider } from "./providers/mock-telebirr.provider";
 import { QrReceiptService } from "../telegram/qr-receipt.service";
 import { InitializePaymentDto } from "./dto/initialize-payment.dto";
 import { ChapaWebhookDto } from "./dto/chapa-webhook.dto";
+import { getEnv } from "../../config/env.util";
 
 @Injectable()
 export class PaymentsService {
@@ -47,6 +48,7 @@ export class PaymentsService {
       currency: tenant.currency,
       txRef,
       returnUrl: `https://t.me/${tenant.botUsername}`,
+      callbackUrl: `${getEnv("SERVER_URL")}/api/v1/payments/webhook/chapa`,
       customerTelegramId: order.customerTelegramId,
     });
 
@@ -93,6 +95,23 @@ export class PaymentsService {
     // Mock always "succeeds" after its simulated delay — there's no real
     // failure path to simulate meaningfully without a real provider.
     return this.processWebhook(txRef, true, { mock: true, txRef });
+  }
+
+  /**
+   * Fallback path for Chapa's sandbox webhook not arriving (observed real
+   * gap — see chapa.provider.ts). Actively polls Chapa's verify endpoint
+   * for a given tenant/txRef and feeds the result through the exact same
+   * processWebhook() idempotency path as the real webhook, so a late or
+   * duplicate webhook arriving afterward is still a safe no-op.
+   */
+  async verifyChapaPayment(tenantId: string, txRef: string) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!tenant?.chapaSecretKey) {
+      throw new BadRequestException("This tenant has no Chapa secret key configured");
+    }
+    const secretKey = this.crypto.decrypt(tenant.chapaSecretKey);
+    const { status, raw } = await this.chapa.verify(secretKey, txRef);
+    return this.processWebhook(txRef, status === "success", raw);
   }
 
   /**

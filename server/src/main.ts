@@ -10,8 +10,15 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
 
+  // In dev, we test through a cloudflared tunnel (Telegram Mini App requires
+  // HTTPS) in addition to the regular localhost dashboard — so CORS needs to
+  // allow both origins, not just localhost. CLIENT_URL is read at boot, so a
+  // tunnel domain change (cloudflared rotates on restart) requires a server
+  // restart to take effect here, same as any other .env change.
+  const devOrigins = ["http://localhost:3000", process.env.CLIENT_URL].filter(Boolean);
+
   app.enableCors({
-    origin: process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : "http://localhost:3000",
+    origin: process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : devOrigins,
     credentials: true,
   });
 

@@ -4,6 +4,15 @@ import { getAccessToken, setAccessToken } from "./auth-token";
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   withCredentials: true, // send the HttpOnly refresh cookie
+  headers: {
+    // Free ngrok tunnels serve an HTML "visit site" interstitial warning page
+    // to the first browser request instead of proxying through to the real
+    // API — which has no CORS headers and causes a misleading CORS error in
+    // the browser console. This header tells ngrok to skip that page.
+    // Only relevant when NEXT_PUBLIC_API_BASE_URL points at an ngrok tunnel
+    // (local dev testing from Telegram's Mini App); harmless in production.
+    "ngrok-skip-browser-warning": "true",
+  },
 });
 
 apiClient.interceptors.request.use((config) => {
