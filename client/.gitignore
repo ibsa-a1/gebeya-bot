@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Playwright E2E — dedicated test-server build cache and run artifacts
+/.next-test/
+/test-results/
+/playwright-report/

@@ -15,7 +15,9 @@ async function bootstrap() {
   // allow both origins, not just localhost. CLIENT_URL is read at boot, so a
   // tunnel domain change (cloudflared rotates on restart) requires a server
   // restart to take effect here, same as any other .env change.
-  const devOrigins = ["http://localhost:3000", process.env.CLIENT_URL].filter(Boolean);
+  // :3001 is Playwright's dedicated E2E test server (see client/playwright.config.ts)
+  // — a fixed, permanent dev origin, unlike CLIENT_URL which rotates with cloudflared.
+  const devOrigins = ["http://localhost:3000", "http://localhost:3001", process.env.CLIENT_URL].filter(Boolean);
 
   app.enableCors({
     origin: process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : devOrigins,
