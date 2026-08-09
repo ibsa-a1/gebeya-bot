@@ -6,6 +6,8 @@ import { OrdersService } from "../orders/orders.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { CryptoService } from "../auth/crypto/crypto.service";
 import { InitDataVerifier } from "./init-data-verifier.service";
+import { PaymentsService } from "../payments/payments.service";
+import { TelegramApiClient } from "./telegram-api.client";
 
 describe("MiniAppController — the actual security boundary", () => {
   let controller: MiniAppController;
@@ -13,14 +15,24 @@ describe("MiniAppController — the actual security boundary", () => {
   let prisma: { tenant: { findUnique: jest.Mock } };
   let crypto: { decrypt: jest.Mock };
   let initDataVerifier: { verify: jest.Mock };
+  let paymentsService: { initializeChapa: jest.Mock };
+  let telegramApi: { sendMessage: jest.Mock };
 
   const originalNodeEnv = process.env.NODE_ENV;
 
   beforeEach(async () => {
     ordersService = { create: jest.fn().mockResolvedValue({ id: "order-1" }) };
-    prisma = { tenant: { findUnique: jest.fn() } };
+    // Tenant lookup is called twice per checkout in the security-boundary
+    // paths below: once inside resolveCustomerTelegramId (to decrypt the bot
+    // token for initData verification), and once more after order creation
+    // (to notify the buyer via bot). Both resolve the same fake tenant here.
+    prisma = { tenant: { findUnique: jest.fn().mockResolvedValue({ botToken: "encrypted-token" }) } };
     crypto = { decrypt: jest.fn().mockReturnValue("decrypted-bot-token") };
     initDataVerifier = { verify: jest.fn() };
+    paymentsService = {
+      initializeChapa: jest.fn().mockResolvedValue({ checkoutUrl: "https://chapa.test/pay", txRef: "test-tx" }),
+    };
+    telegramApi = { sendMessage: jest.fn().mockResolvedValue({ ok: true }) };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MiniAppController],
@@ -30,6 +42,8 @@ describe("MiniAppController — the actual security boundary", () => {
         { provide: PrismaService, useValue: prisma },
         { provide: CryptoService, useValue: crypto },
         { provide: InitDataVerifier, useValue: initDataVerifier },
+        { provide: PaymentsService, useValue: paymentsService },
+        { provide: TelegramApiClient, useValue: telegramApi },
       ],
     }).compile();
 
