@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   // even though the initial page load itself succeeds.
   // NOTE: this tunnel domain rotates on every cloudflared restart — update
   // this value whenever that happens.
-  allowedDevOrigins: ["chain-cds-farm-tennessee.trycloudflare.com"],
+  allowedDevOrigins: ["hwy-warm-rear-edt.trycloudflare.com"],
 };
 
 export default nextConfig;
