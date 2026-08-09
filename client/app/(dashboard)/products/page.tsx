@@ -88,18 +88,21 @@ export default function ProductsPage() {
           <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
             <Input
               label="Name"
+              name="name"
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
             <Input
               label="Category"
+              name="category"
               required
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value })}
             />
             <Input
               label="Price (ETB)"
+              name="price"
               type="number"
               min="0"
               step="0.01"
@@ -109,6 +112,7 @@ export default function ProductsPage() {
             />
             <Input
               label="Stock"
+              name="stock"
               type="number"
               min="0"
               required
