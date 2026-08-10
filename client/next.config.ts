@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   // even though the initial page load itself succeeds.
   // NOTE: this tunnel domain rotates on every cloudflared restart — update
   // this value whenever that happens.
-  allowedDevOrigins: ["hwy-warm-rear-edt.trycloudflare.com"],
+  allowedDevOrigins: ["suit-indicated-astronomy-successful.trycloudflare.com"],
   // Next.js locks .next/ per-directory, so a second dev server instance
   // (Playwright's dedicated :3001 test server, see playwright.config.ts)
   // can't share it with the main :3000 dev server. PLAYWRIGHT_TEST_DIST_DIR

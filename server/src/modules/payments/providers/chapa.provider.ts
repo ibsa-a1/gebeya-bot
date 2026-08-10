@@ -1,4 +1,5 @@
 import { Injectable, BadGatewayException } from "@nestjs/common";
+import { createHmac, timingSafeEqual } from "crypto";
 
 const CHAPA_INITIALIZE_URL = "https://api.chapa.co/v1/transaction/initialize";
 const CHAPA_VERIFY_URL = "https://api.chapa.co/v1/transaction/verify";
@@ -74,5 +75,33 @@ export class ChapaProvider {
     }
 
     return { status: data.data?.status ?? "unknown", raw: data };
+  }
+
+  /**
+   * Verifies a Chapa webhook's authenticity per their documented protocol:
+   * HMAC-SHA256 of the raw request body, using the "Secret hash" configured
+   * in the Chapa dashboard under Settings > Webhooks. Chapa sends this in
+   * either a "chapa-signature" or "x-chapa-signature" header — check both,
+   * accept if either matches (per their own docs).
+   * https://developer.chapa.co/docs/webhooks/
+   */
+  verifyWebhookSignature(
+    rawBody: Buffer,
+    headers: Record<string, string | string[] | undefined>,
+    secret: string,
+  ): boolean {
+    const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+
+    const candidates = [headers["chapa-signature"], headers["x-chapa-signature"]]
+      .flat()
+      .filter((v): v is string => typeof v === "string");
+
+    return candidates.some((received) => {
+      const expectedBuf = Buffer.from(expected);
+      const receivedBuf = Buffer.from(received);
+      return (
+        expectedBuf.length === receivedBuf.length && timingSafeEqual(expectedBuf, receivedBuf)
+      );
+    });
   }
 }

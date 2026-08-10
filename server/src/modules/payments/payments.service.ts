@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import type { IncomingHttpHeaders } from "http";
 import { randomUUID } from "crypto";
 import { PrismaService } from "../../prisma/prisma.service";
 import { CryptoService } from "../auth/crypto/crypto.service";
@@ -87,7 +93,24 @@ export class PaymentsService {
     return result;
   }
 
-  async handleChapaWebhook(dto: ChapaWebhookDto) {
+  /**
+   * rawBody may be undefined in theory (e.g. an empty request), which
+   * verifyWebhookSignature would correctly reject rather than crash on —
+   * Buffer.from(undefined) would throw, so we guard explicitly here first.
+   */
+  async handleChapaWebhook(
+    dto: ChapaWebhookDto,
+    rawBody: Buffer | undefined,
+    headers: IncomingHttpHeaders,
+  ) {
+    const secret = getEnv("CHAPA_WEBHOOK_SECRET");
+    const isValid =
+      !!rawBody && this.chapa.verifyWebhookSignature(rawBody, headers, secret);
+
+    if (!isValid) {
+      throw new UnauthorizedException("Invalid Chapa webhook signature");
+    }
+
     return this.processWebhook(dto.tx_ref, dto.status === "success", dto);
   }
 

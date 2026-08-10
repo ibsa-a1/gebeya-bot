@@ -1,4 +1,15 @@
-import { Controller, Post, Param, Body, UseGuards, HttpCode, HttpStatus } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Param,
+  Body,
+  Req,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from "@nestjs/common";
+import type { RawBodyRequest } from "@nestjs/common";
+import type { Request } from "express";
 import { PaymentsService } from "./payments.service";
 import { InitializePaymentDto } from "./dto/initialize-payment.dto";
 import { ChapaWebhookDto } from "./dto/chapa-webhook.dto";
@@ -37,13 +48,13 @@ export class PaymentsController {
   }
 
   // Webhooks are NOT behind JwtAuthGuard/TenantGuard — Chapa itself calls
-  // this, it has no user session. Real signature verification (Chapa signs
-  // its webhooks) is a hardening item worth adding before real production
-  // traffic — flagging honestly rather than pretending this is fully secure
-  // as written.
+  // this, it has no user session. Authenticity is instead verified via
+  // HMAC-SHA256 signature (see PaymentsService.handleChapaWebhook), using
+  // the raw, unparsed request body — req.rawBody is only populated because
+  // main.ts enables { rawBody: true } on the Nest app.
   @Post("webhook/chapa")
   @HttpCode(HttpStatus.OK)
-  handleChapaWebhook(@Body() dto: ChapaWebhookDto) {
-    return this.paymentsService.handleChapaWebhook(dto);
+  handleChapaWebhook(@Req() req: RawBodyRequest<Request>, @Body() dto: ChapaWebhookDto) {
+    return this.paymentsService.handleChapaWebhook(dto, req.rawBody, req.headers);
   }
 }

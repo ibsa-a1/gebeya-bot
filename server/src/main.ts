@@ -7,7 +7,11 @@ import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody: true preserves the exact, unparsed request body alongside the
+  // normal parsed one (req.rawBody), needed for HMAC signature verification
+  // (Chapa webhooks) — any reformatting from JSON parsing/re-stringifying
+  // would produce a different hash than what Chapa actually signed.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   app.use(cookieParser());
 
   // In dev, we test through a cloudflared tunnel (Telegram Mini App requires
